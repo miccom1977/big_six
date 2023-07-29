@@ -2,10 +2,10 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Excercise;
+use App\Models\Exercise;
 use Illuminate\Http\Request;
 
-class ExcerciseController extends Controller
+class ExerciseController extends Controller
 {
     /**
      * Display a listing of the resource.
@@ -34,7 +34,7 @@ class ExcerciseController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(Excercise $excercise)
+    public function show(Exercise $exercise)
     {
         //
     }
@@ -42,7 +42,7 @@ class ExcerciseController extends Controller
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(Excercise $excercise)
+    public function edit(Exercise $exercise)
     {
         //
     }
@@ -50,7 +50,7 @@ class ExcerciseController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, Excercise $excercise)
+    public function update(Request $request, Exercise $exercise)
     {
         //
     }
@@ -58,7 +58,7 @@ class ExcerciseController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Excercise $excercise)
+    public function destroy(Exercise $exercise)
     {
         //
     }
