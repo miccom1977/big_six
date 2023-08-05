@@ -24,13 +24,84 @@
                             @endif
                                 Wykonaj {{ $singleExercise['seriesToDo'] }} serii/ie po {{ $singleExercise['repetitions'] }} powtórzeń<br>
                         @endforeach
+                            <livewire:timer />
                     @else
-                        Dzisiaj nie trenujemy!<br>
-                        Twoje mięśnie, ścięgna i kości potrzebują regeneracji :) <br>
+                            {{ __('app.do_break') }}<br>
                     @endif
                 </div>
             </div>
         </div>
     </div>
 </div>
+<script>
+    const counter = [];
+    function loadTimer(czas, lokalizacjaTimera) {
+        clearInterval(counter[lokalizacjaTimera]);
+        delete counter[lokalizacjaTimera];
+        counter[lokalizacjaTimera] = [setInterval(timer, 1000)]; // ustawienie funkcji odpowiedajacej za cykliczne wywolanie(co 1 s) funkcji timer()
+
+        const out = prepareTimer(czas);
+        if ($("#"+lokalizacjaTimera).length == 1 ) {
+            $("#"+lokalizacjaTimera).html(out); // przypisanie tekstu timera do odpowiedniego elementu html
+        }
+
+        function timer() {
+            --czas;
+            const out = prepareTimer(czas);
+            if( $("#"+lokalizacjaTimera).length == 1 ) {
+                $("#"+lokalizacjaTimera).html(out); // przypisanie tekstu timera do odpowiedniego elementu html
+            }
+            if (czas <= 0) {
+                $("#"+lokalizacjaTimera).html('');
+                //wysyłamy do sprawdzenia czy czas upłynął i czy mamy nowe zadanie
+                Livewire.emit('prepareNextTraining');
+                return;
+            }
+        }
+    }
+
+    function prepareTimer(secondsTimer) {
+        const min = secondsTimer/60; // minuty
+        const h = min/60;// godziny
+        const d = h/24; // dni
+        let sLeft = Math.floor(secondsTimer % 60); // pozostało sekund
+        let minLeft = Math.floor(min % 60); // pozostało minut
+        let hLeft = Math.floor(h % 24);
+        let dLeft = Math.floor(d);
+        let dToTmer = '';
+        if ( dLeft > 0 ) {
+            dToTmer = dLeft+" d.  ";
+        }
+        // pozostało godzin
+        if (minLeft < 10) {
+            minLeft = "0" + minLeft;
+        }
+
+        if (sLeft < 10) {
+            sLeft = "0" + sLeft;
+        }
+
+        if (hLeft < 10) {
+            hLeft = "0" + hLeft;
+        }
+        return dToTmer + hLeft + ":" + minLeft + ":" + sLeft; //tekst wyswietlony uzytkownikowi
+    }
+
+    window.addEventListener('start_timer', event => {
+        loadTimer(event.detail.time, 'timer');
+        $('#startTraining').addClass('d-none');
+        $('#stopTraining').removeClass('d-none');
+    });
+
+    window.addEventListener('start_next_exercise', event => {
+        alert(event.detail.title);
+    });
+
+    window.addEventListener('stop_timer', event => {
+        clearInterval(counter['timer']);
+        delete counter['timer'];
+    });
+
+</script>
 @endsection
+

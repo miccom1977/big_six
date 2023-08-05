@@ -15,6 +15,7 @@
 
     <!-- Scripts -->
     @vite(['resources/sass/app.scss', 'resources/js/app.js'])
+    @livewireStyles
 </head>
 <body>
     <div id="app">
@@ -39,13 +40,13 @@
                         @guest
                             @if (Route::has('login'))
                                 <li class="nav-item">
-                                    <a class="nav-link" href="{{ route('login') }}">{{ __('Login') }}</a>
+                                    <a class="nav-link" href="{{ route('login') }}">{{ __('app.login') }}</a>
                                 </li>
                             @endif
 
                             @if (Route::has('register'))
                                 <li class="nav-item">
-                                    <a class="nav-link" href="{{ route('register') }}">{{ __('Register') }}</a>
+                                    <a class="nav-link" href="{{ route('register') }}">{{ __('app.register') }}</a>
                                 </li>
                             @endif
                         @else
@@ -69,12 +70,12 @@
                         @endguest
                         <li class="nav-item dropdown">
                             <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownMenuLink" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false" v-pre>
-                                {{ Config::get('languages')[App::getLocale()] }}
+                                {{ __('app.'.Config::get('languages')[App::getLocale()]) }}
                             </a>
                             <div class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
                                 @foreach (Config::get('languages') as $lang => $language)
                                     @if ($lang != App::getLocale())
-                                        <a class="dropdown-item" href="{{ route('lang.switch', $lang) }}"> {{$language}}</a>
+                                        <a class="dropdown-item" href="{{ route('lang.switch', $lang) }}"> {{ __('app.'.$language) }}</a>
                                     @endif
                                 @endforeach
                             </div>
@@ -88,5 +89,6 @@
             @yield('content')
         </main>
     </div>
+    @livewireScripts
 </body>
 </html>
