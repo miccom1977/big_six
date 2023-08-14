@@ -39,19 +39,12 @@ class HomeController extends Controller
          */
         $i = 1;
         $dayOfTheWeek = Carbon::now()->dayOfWeek;
-
-        $iAllTrainings = Exercise::where('user_id', Auth::user()->id)->count();
         // sprawdzamy, na jakim etapie jest zawodnik
-        $workStep = $this->exerciseService->getWorkStep($exStages, $iAllTrainings);
-        list($workDay, $exerciseToDo) = $this->exerciseService->getExercisesList($workStep, $dayOfTheWeek, 0);
-        if($workStep == 2) {
-            list($workDay, $exerciseToDo) = $this->exerciseService->getExercisesList($workStep, $dayOfTheWeek, 1);
-        }
-        $exercises = [];
-        if (in_array($dayOfTheWeek, $workDay)) {
-            // dzień treningu
-            $exercises = $this->exerciseService->getExercises($exerciseToDo);
-        }
+        $workStep = $this->exerciseService->getWorkStep($exStages);
+        // pobieramy listę zadań do wykonania
+        $exerciseToDo = $this->exerciseService->getExercisesList($workStep, $dayOfTheWeek, 1);
+        // sprawdzamy, czy użytkownik ma jeszcze do wykonania jakieś zadania
+        $exercises = $this->exerciseService->getExercises($exerciseToDo);
         return view('home', compact('exercises'));
     }
 }

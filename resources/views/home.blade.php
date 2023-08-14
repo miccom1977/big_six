@@ -15,18 +15,23 @@
                     @endif
                     @if (count($exercises) > 0)
                         @foreach($exercises as $singleExercise)
-                            @if ($singleExercise['step1Done'] == 0)
-                                Wykonaj zadanie {{ __('exercises.' . $singleExercise['name']) }} Poziom Początkujący<br>
-                            @elseif ($singleExercise['step2Done'] == 0)
-                                Wykonaj zadanie {{ __('exercises.' . $singleExercise['name']) }} Poziom Treningowy<br>
-                            @elseif ($singleExercise['step3Done'] == 0)
-                                Wykonaj zadanie {{ __('exercises.' . $singleExercise['name']) }} Poziom Przejścia<br>
-                            @endif
-                                Wykonaj {{ $singleExercise['seriesToDo'] }} serii/ie po {{ $singleExercise['repetitions'] }} powtórzeń<br>
+                            <div id="exerciseElement" work_id="{{ $singleExercise['work_id'] }}" step="{{ $singleExercise['step'] }}" class="border border-dark rounded-lg shadow p-4 mb-4 bg-white rounded">
+                                Wykonaj zadanie {{ __('exercises.' . $singleExercise['name']) }} {{ __('app.step' . $singleExercise['step']) }}<br>
+                                @for ($i = 1; $i <= $singleExercise['seriesEnd']; $i++)
+                                    Wykonaj 1 serię po {{ $singleExercise['repetitions'] }} powtórzeń
+                                @if ($singleExercise['seriesDoIt'] > 0)
+                                        @php $singleExercise['seriesDoIt']-- @endphp
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-check" viewBox="0 0 16 16">
+                                            <path d="M10.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425a.267.267 0 0 1 .02-.022z"/>
+                                        </svg>
+                                @endif
+                                    <br>
+                                @endfor
+                            </div>
                         @endforeach
                             <livewire:timer />
                     @else
-                            {{ __('app.do_break') }}<br>
+                            {!! __('app.do_break') !!}<br>
                     @endif
                 </div>
             </div>
@@ -38,7 +43,8 @@
     function loadTimer(czas, lokalizacjaTimera) {
         clearInterval(counter[lokalizacjaTimera]);
         delete counter[lokalizacjaTimera];
-        counter[lokalizacjaTimera] = [setInterval(timer, 1000)]; // ustawienie funkcji odpowiedajacej za cykliczne wywolanie(co 1 s) funkcji timer()
+        counter[lokalizacjaTimera] = [setInterval(timer, 1000)];
+        // ustawienie funkcji odpowiadającej za cykliczne wywołanie (co 1 s) funkcji timer()
 
         const out = prepareTimer(czas);
         if ($("#"+lokalizacjaTimera).length == 1 ) {
@@ -53,8 +59,15 @@
             }
             if (czas <= 0) {
                 $("#"+lokalizacjaTimera).html('');
+                const params = {
+                    work_id: $('#exerciseElement').attr('work_id'),
+                    step: $('#exerciseElement').attr('step'),
+                    ex_id: $('#exerciseElement').attr('ex_id'),
+                }
                 //wysyłamy do sprawdzenia czy czas upłynął i czy mamy nowe zadanie
-                Livewire.emit('prepareNextTraining');
+                Livewire.emit('prepareNextTraining', params);
+                clearInterval(counter[lokalizacjaTimera]);
+                delete counter[lokalizacjaTimera];
                 return;
             }
         }

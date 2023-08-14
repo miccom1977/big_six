@@ -3,7 +3,9 @@
 namespace App\Services;
 
 use App\Models\Exercise;
+use App\Models\ExercisesStages;
 use App\Models\Repetition;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 
@@ -16,10 +18,10 @@ class ExerciseService
     /**
      * @param int $workStep Krok ćwiczenia
      * @param int $dayOfTheWeek Dzień treningowy
-     * @param int $stepTraining nr. zadania do wykonania
+     * @param int $stepExercise nr. zadania do wykonania
      * @return array
      */
-    public function getExercisesList(int $workStep, int $dayOfTheWeek, int $stepTraining): array
+    public function getExercisesList(int $workStep, int $dayOfTheWeek, int $stepExercise): array
     {
         $workDay = [];
         $exercisesToDo = [];
@@ -96,7 +98,7 @@ class ExerciseService
                 }
                 break;
         }
-        return array($workDay, $exercisesToDo[$stepTraining] ?? '');
+        return $exercisesToDo;
     }
 
     /** Metoda zwraca poziom zaawansowania treningu
@@ -106,21 +108,17 @@ class ExerciseService
      * 4. Odosobnienie
      * 5. Supermax
      * @param array $exStages Poziom wykonania poszczególnych zadań Wielkiej Szóstki
-     * @param int $iAllTrainings Liczba wykonanych już treningów
      * @return int
      */
-    public function getWorkStep(array $exStages, int $iAllTrainings): int
+    public function getWorkStep(array $exStages): int
     {
         $workStep = 0;
+        $trainingLevel = array_sum($exStages);
         switch (count($exStages)) {
-            case 2 && $iAllTrainings > 0:
-                $workStep = 1;
-                break;
-            case 3:
-                $workStep = 2;
+            case 4:
+                $workStep = $trainingLevel < 14 ? 1 : 2;
                 break;
             case 6:
-                $trainingLevel = array_sum($exStages);
                 switch ($trainingLevel) {
                     case $trainingLevel > 35:
                         $workStep = 3;
@@ -136,79 +134,93 @@ class ExerciseService
         }
         return $workStep;
     }
-
-    /** Metoda zwaraca zadanie do wykonania
-     * @param mixed $singleExplode
+/*
+    /** Metoda zwraca zadanie do wykonania
+     * @param array $exercisesToDo Lista zadań
      * @return array
      */
-    public function getExercises(mixed $singleExplode): array
+    /*
+    public function getExercises(array $exercisesToDo): array
     {
+        $aExercises = [];
         $exercises = [];
-        $maxTraining = Exercise::where('user_id', Auth::user()->id)
-            ->where('work_id', $singleExplode)->orderBy('ex_id', 'DESC')->first();
-        if ($maxTraining) {
+        // pobieramy poziomy ćwiczeń (wejście, trening, przejście)
+        $exercisesStages = ExercisesStages::where('user_id', Auth::user()->id)->get();
+        // generujemy string z kompletem zadanie_poziom
+        foreach ($exercisesToDo as $singleExercise) {
+            $step = ($exercisesStages[$singleExercise]['step'] ?? 1);
+            $repetition = Repetition::where('id', $singleExercise)->where('step', $step)->first();
+            $aExercises[$singleExercise] = [
+                'step' => $step,
+                'series' => $repetition->series,
+            ];
+            // pobieramy ilość wykonanych treningów
             $allStepTrainings = Exercise::where('user_id', Auth::user()->id)
-                ->where('work_id', $singleExplode)->where('ex_id', $maxTraining->ex_id)->whereDate('created_at', Carbon::today())->get();
-            $step1 = $step2 = $step3 = 0;
-            foreach ($allStepTrainings as $singleTraining) {
-                switch ($singleTraining->step) {
-                    case 1:
-                        $step1++;
-                        break;
-                    case 2:
-                        $step2++;
-                        break;
-                    case 3:
-                        $step3++;
-                        break;
-                }
+                ->whereDate('created_at', Carbon::today())
+                ->where('work_id', $singleExercise)->where('step', $step)->count();
+            if ($allStepTrainings < $repetition->series * 2) {
+                $exercises[] = [
+                    'work_id' => $singleExercise,
+                    'step' => $step,
+                    'name' => $singleExercise,
+                    'repetitions' => $repetition->repetitions,
+                    'seriesEnd' => $repetition->series * 2,
+                    'seriesToDo' => ($repetition->series * 2) - $allStepTrainings
+                ];
             }
-            $work_id = $singleExplode . '_' . $maxTraining->ex_id;
-            $step2Done = $step3Done = 0;
-            $repetition = Repetition::where('work_id', $work_id)
-                ->where('step', 1)->first();
-            $step1Done = $repetition->series <= $step1 ? 1 : 0;
-            $repetitions = $repetition->repetitions;
-            $seriesEnd = $step1;
-            if ($step1Done) {
-                $repetition = Repetition::where('work_id', $work_id)
-                    ->where('step', 2)->first();
-                $step2Done = $repetition->series <= $step2 ? 1 : 0;
-                $repetitions = $repetition->repetitions;
-                $seriesEnd = $step2;
+        }
 
-                if ($step2Done) {
-                    $repetition = Repetition::where('work_id', $work_id)
-                        ->where('step', 3)->first();
-                    $step3Done = $repetition->series <= $step3 ? 1 : 0;
-                    $repetitions = $repetition->repetitions;
-                    $seriesEnd = $step3;
-                }
+        return $exercises;
+    }
+    */
+    public function getExercises(array $exercisesToDo): array
+    {
+        $authUserId = Auth::user()->id;
+        $exercisesStages = ExercisesStages::where('user_id', $authUserId)->get();
+        $repetitions = Repetition::whereIn('id', $exercisesToDo)->get();
+
+        // Zbierz unikalne work_id i step z $exercisesToDo
+        $exerciseData = [];
+        foreach ($exercisesToDo as $singleExercise) {
+            $step = ($exercisesStages[$singleExercise]['step'] ?? 1);
+            $exerciseData[$singleExercise][$step] = $step;
+        }
+
+        // Zbierz unikalne work_id i step do tablic, żeby użyć ich w zapytaniu
+        $workIds = array_keys($exerciseData);
+        $steps = Arr::flatten($exerciseData);
+
+        // Pobierz dane dotyczące wszystkich ćwiczeń i etapów w jednym zapytaniu
+        $allStepTrainings = Exercise::whereIn('work_id', $workIds)
+            ->where('user_id', $authUserId)
+            ->whereDate('created_at', Carbon::today())
+            ->whereIn('step', $steps)
+            ->selectRaw('work_id, step, COUNT(*) as count')
+            ->groupBy('work_id', 'step')
+            ->get()
+            ->keyBy(function ($item) {
+                return $item->work_id . '_' . $item->step;
+            });
+
+        $exercises = [];
+        foreach ($exercisesToDo as $singleExercise) {
+            $step = ($exercisesStages[$singleExercise]['step'] ?? 1);
+            $repetition = $repetitions->firstWhere('id', $singleExercise);
+
+            $key = $singleExercise . '_' . $step;
+            $count = $allStepTrainings[$key]->count ?? 0;
+
+            if ($repetition && $count < $repetition->series * 2) {
+                $exercises[] = [
+                    'work_id' => $singleExercise,
+                    'step' => $step,
+                    'name' => $singleExercise,
+                    'repetitions' => $repetition->repetitions,
+                    'seriesEnd' => $repetition->series * 2,
+                    'seriesDoIt' => $count,
+                    'name' => $key
+                ];
             }
-
-            $exercises[] = [
-                'name' => $work_id,
-                'step1Done' => $step1Done,
-                'step2Done' => $step2Done,
-                'step3Done' => $step3Done,
-                'repetitions' => $repetitions,
-                'seriesEnd' => $seriesEnd,
-                'seriesToDo' => $repetition->series,
-            ];
-        } else {
-            $work_id = $singleExplode . '_1';
-            $repetition = Repetition::where('work_id', $work_id)
-                ->where('step', 1)->first();
-            $repetitions = $repetition->repetitions;
-            $exercises[] = [
-                'name' => $work_id,
-                'step1Done' => 0,
-                'step2Done' => 0,
-                'step3Done' => 0,
-                'repetitions' => $repetitions,
-                'seriesEnd' => 0,
-                'seriesToDo' => $repetition->series,
-            ];
         }
         return $exercises;
     }

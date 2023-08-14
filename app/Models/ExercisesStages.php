@@ -4,9 +4,9 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
-class Exercise extends Model
+class ExercisesStages extends Model
 {
     use HasFactory;
-    protected $fillable = ['work_id', 'user_id', 'step', 'ex_id'];
 }

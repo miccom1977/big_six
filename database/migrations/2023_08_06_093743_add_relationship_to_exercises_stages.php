@@ -11,12 +11,9 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('repetitions', function (Blueprint $table) {
-            $table->id();
-            $table->string('work_id');
-            $table->string('repetitions');
-            $table->string('step');
-            $table->string('series');
+        Schema::table('exercises_stages', function (Blueprint $table) {
+            $table->foreignId('user_id')->constrained('users');
+            $table->foreignId('work_id')->constrained('repetitions');
         });
     }
 
@@ -25,6 +22,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('repetitions');
+        Schema::table('exercises_lists', function (Blueprint $table) {
+            //
+        });
     }
 };

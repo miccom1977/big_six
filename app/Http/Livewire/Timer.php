@@ -2,6 +2,9 @@
 
 namespace App\Http\Livewire;
 
+use App\Models\Exercise;
+use App\Models\User;
+use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
 
 class Timer extends Component
@@ -28,7 +31,17 @@ class Timer extends Component
         $this->dispatchBrowserEvent('stop_timer', ['time' => $totalSeconds]);
     }
 
-    public function prepareNextTraining() {
+    public function prepareNextTraining(array $exData) {
+        Exercise::create([
+            'work_id' => $exData['work_id'],
+            'user_id' => Auth::user()->id,
+            'step' => $exData['step'],
+            'ex_id' => $exData['ex_id'],
+        ]);
+        //$user = User::find(Auth::user()->id);
+        //$user->stage = '1_1_1_1';
+        //$user->save();
+        return redirect()->to('/home');
         //$this->dispatchBrowserEvent('start_next_exercise', ['title' => 'startujemy z nowym zadaniem']);
     }
 

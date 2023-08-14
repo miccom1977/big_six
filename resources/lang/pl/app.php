@@ -20,4 +20,8 @@ return [
     'sprl' => 'Wyślij email z linkiem do resetowania hasła',
     'polish' => 'Polski',
     'english' => 'Angielski',
+    'step1' => 'Poziom początkujący',
+    'step2' => 'Poziom treningowy',
+    'step3' => 'Poziom przejścia',
+
 ];
