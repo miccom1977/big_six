@@ -13,23 +13,29 @@
                             {{ session('status') }}
                         </div>
                     @endif
+                        @php $timer = 0 @endphp
                     @if (count($exercises) > 0)
                         @foreach($exercises as $singleExercise)
-                            <div id="exerciseElement" work_id="{{ $singleExercise['work_id'] }}" step="{{ $singleExercise['step'] }}" class="border border-dark rounded-lg shadow p-4 mb-4 bg-white rounded">
-                                Wykonaj zadanie {{ __('exercises.' . $singleExercise['name']) }} {{ __('app.step' . $singleExercise['step']) }}<br>
+                            <div class="exerciseElement border border-dark rounded-lg shadow p-4 mb-4 bg-white rounded" work_id="{{ $singleExercise['work_id'] }}" step="{{ $singleExercise['step'] }}" ex_id="{{ $singleExercise['ex_id'] }}">
+                                <h1>{{ __('exercises.' . $singleExercise['name']) }}</h1>
+                                <h2>{{ __('app.step' . $singleExercise['step']) }}</h2><br>
                                 @for ($i = 1; $i <= $singleExercise['seriesEnd']; $i++)
                                     Wykonaj 1 serię po {{ $singleExercise['repetitions'] }} powtórzeń
                                 @if ($singleExercise['seriesDoIt'] > 0)
-                                        @php $singleExercise['seriesDoIt']-- @endphp
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-check" viewBox="0 0 16 16">
-                                            <path d="M10.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425a.267.267 0 0 1 .02-.022z"/>
-                                        </svg>
+                                    @php $singleExercise['seriesDoIt']-- @endphp
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-check" viewBox="0 0 16 16">
+                                        <path d="M10.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425a.267.267 0 0 1 .02-.022z"/>
+                                    </svg>
+                                @else
+                                    @if ($timer == 0)
+                                        @php $timer++ @endphp
+                                        <livewire:timer />
+                                    @endif
                                 @endif
                                     <br>
                                 @endfor
                             </div>
                         @endforeach
-                            <livewire:timer />
                     @else
                             {!! __('app.do_break') !!}<br>
                     @endif
@@ -40,7 +46,7 @@
 </div>
 <script>
     const counter = [];
-    function loadTimer(czas, lokalizacjaTimera) {
+    function loadTimer(czas, lokalizacjaTimera, container) {
         clearInterval(counter[lokalizacjaTimera]);
         delete counter[lokalizacjaTimera];
         counter[lokalizacjaTimera] = [setInterval(timer, 1000)];
@@ -59,10 +65,11 @@
             }
             if (czas <= 0) {
                 $("#"+lokalizacjaTimera).html('');
+                const parentContainer = $(".card-body").find("[work_id='" + container + "']");
                 const params = {
-                    work_id: $('#exerciseElement').attr('work_id'),
-                    step: $('#exerciseElement').attr('step'),
-                    ex_id: $('#exerciseElement').attr('ex_id'),
+                    work_id: parentContainer.attr('work_id'),
+                    step: parentContainer.attr('step'),
+                    ex_id: parentContainer.attr('ex_id'),
                 }
                 //wysyłamy do sprawdzenia czy czas upłynął i czy mamy nowe zadanie
                 Livewire.emit('prepareNextTraining', params);
@@ -97,11 +104,11 @@
         if (hLeft < 10) {
             hLeft = "0" + hLeft;
         }
-        return dToTmer + hLeft + ":" + minLeft + ":" + sLeft; //tekst wyswietlony uzytkownikowi
+        return dToTmer + hLeft + ":" + minLeft + ":" + sLeft; //tekst wyświetlony użytkownikowi
     }
 
     window.addEventListener('start_timer', event => {
-        loadTimer(event.detail.time, 'timer');
+        loadTimer(event.detail.time, 'timer', event.detail.parentContainer);
         $('#startTraining').addClass('d-none');
         $('#stopTraining').removeClass('d-none');
     });

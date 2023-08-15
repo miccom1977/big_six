@@ -210,17 +210,16 @@ class ExerciseService
             $key = $singleExercise . '_' . $step;
             $count = $allStepTrainings[$key]->count ?? 0;
 
-            if ($repetition && $count < $repetition->series * 2) {
-                $exercises[] = [
-                    'work_id' => $singleExercise,
-                    'step' => $step,
-                    'name' => $singleExercise,
-                    'repetitions' => $repetition->repetitions,
-                    'seriesEnd' => $repetition->series * 2,
-                    'seriesDoIt' => $count,
-                    'name' => $key
-                ];
-            }
+            $exercises[] = [
+                'work_id' => $singleExercise,
+                'step' => $step,
+                'name' => $singleExercise,
+                'repetitions' => $repetition->repetitions,
+                'seriesEnd' => $repetition->series * 2,
+                'seriesDoIt' => $count,
+                'name' => $key,
+                'ex_id' => $singleExercise
+            ];
         }
         return $exercises;
     }

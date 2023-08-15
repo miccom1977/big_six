@@ -19,10 +19,10 @@ class Timer extends Component
 
 
 
-    public function startTimer()
+    public function startTimer($parentContainer)
     {
         $this->timerTimestamp = gmdate("H:i:s", 120);
-        $this->dispatchBrowserEvent('start_timer', ['time' => 120]);
+        $this->dispatchBrowserEvent('start_timer', ['time' => 15, 'parentContainer' => $parentContainer]);
     }
 
     public function stopTimer(string $timer)
